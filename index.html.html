@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자사몰 대시보드</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f8fafc;color:#1e293b;font-size:14px;}
+/* 헤더 */
+.header{background:#fff;border-bottom:1px solid #e2e8f0;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;}
+.header h1{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-0.03em;}
+.header-sub{font-size:11px;color:#94a3b8;margin-top:2px;}
+/* 버튼 */
+.btn{padding:7px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#64748b;transition:all .15s;}
+.btn:hover{background:#f1f5f9;}
+.btn-primary{background:#6366f1;color:#fff;border-color:#6366f1;}
+.btn-primary:hover{background:#4f46e5;}
+.btn-success{background:#16a34a;color:#fff;border-color:#16a34a;}
+.btn-success:hover{background:#15803d;}
+/* 날짜 바 */
+.date-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:10px 24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.date-quick-btns{display:flex;gap:6px;}
+.dqbtn{padding:5px 12px;border-radius:6px;border:1px solid #e2e8f0;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#64748b;transition:all .15s;}
+.dqbtn:hover{background:#f1f5f9;}
+.dqbtn.active{background:#6366f1;color:#fff;border-color:#6366f1;}
+.date-sep{color:#cbd5e1;font-size:12px;}
+.date-inputs{display:flex;align-items:center;gap:6px;}
+.date-inputs input{padding:5px 8px;border-radius:6px;border:1px solid #e2e8f0;font-size:12px;color:#334155;}
+.date-inputs span{font-size:12px;color:#94a3b8;}
+/* 컨테이너 */
+.wrap{padding:18px 24px;max-width:1500px;margin:0 auto;}
+.err{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#dc2626;font-size:13px;display:none;}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:18px;}
+.kpi{background:#fff;border-radius:12px;padding:14px 16px;border:1px solid #e8eaf0;}
+.kpi-label{font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px;}
+.kpi-val{font-size:22px;font-weight:700;color:#0f172a;letter-spacing:-0.02em;}
+.kpi-cmp{font-size:11px;margin-top:5px;display:flex;align-items:center;gap:4px;}
+.kpi-bar{height:3px;border-radius:2px;width:28px;margin-top:8px;}
+.up{color:#16a34a;}.down{color:#dc2626;}.flat{color:#94a3b8;}
+/* 탭 */
+.tabs{display:flex;gap:4px;background:#f1f5f9;padding:4px;border-radius:10px;width:fit-content;margin-bottom:16px;}
+.tab{padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:#64748b;transition:all .15s;}
+.tab.active{background:#6366f1;color:#fff;}
+.panel{display:none;}.panel.active{display:block;}
+/* 필터 */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;}
+.fg{display:flex;flex-direction:column;gap:3px;}
+.fg label{font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:.04em;}
+.fg input,.fg select{padding:6px 10px;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;color:#334155;background:#fff;}
+.gbtns{display:flex;gap:5px;flex-wrap:wrap;}
+.gbtn{padding:6px 12px;border-radius:7px;border:1px solid #e2e8f0;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#64748b;transition:all .15s;}
+.gbtn.active{background:#6366f1;color:#fff;border-color:#6366f1;}
+/* 테이블 */
+.tbl-card{background:#fff;border-radius:12px;border:1px solid #e8eaf0;overflow:hidden;}
+.tbl-toolbar{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid #f1f5f9;}
+.tbl-title{font-size:12px;font-weight:600;color:#475569;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px;}
+thead tr{background:#f8fafc;border-bottom:1px solid #e8eaf0;}
+th{padding:9px 12px;text-align:right;color:#64748b;font-weight:600;font-size:10px;white-space:nowrap;letter-spacing:.03em;}
+th:first-child{text-align:left;}
+td{padding:10px 12px;text-align:right;border-bottom:1px solid #f8fafc;color:#475569;white-space:nowrap;}
+td:first-child{text-align:left;color:#1e293b;font-weight:600;}
+tr:last-child td{border-bottom:none;}
+tr.dr{cursor:pointer;}tr.dr:hover td{background:#fafafe;}
+tr.sub td{background:#faf9ff;font-size:11px;color:#64748b;}
+tr.sub:hover td{background:#f5f3ff;}
+.ei{color:#6366f1;font-size:10px;margin-right:5px;}
+.bar-cell{min-width:80px;}
+.mbar{height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden;display:inline-block;width:70px;vertical-align:middle;}
+.mbar-inner{height:100%;border-radius:3px;}
+.gh{color:#16a34a;font-weight:700;}.gm{color:#d97706;font-weight:700;}.gl{color:#dc2626;font-weight:700;}
+.pp{color:#16a34a;font-weight:700;}.pn{color:#dc2626;font-weight:700;}
+.loading{text-align:center;padding:40px;color:#94a3b8;font-size:13px;}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;}
+.tag-adj{background:#ede9fe;color:#6d28d9;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>자사몰 대시보드</h1>
+    <div class="header-sub" id="lu">데이터 로딩 중...</div>
+  </div>
+  <button class="btn btn-primary" id="rb" onclick="loadAll()">⟳ 새로고침</button>
+</div>
+
+<!-- 글로벌 날짜 바 -->
+<div class="date-bar">
+  <div class="date-quick-btns">
+    <button class="dqbtn" onclick="setDateRange('yesterday')">어제</button>
+    <button class="dqbtn active" onclick="setDateRange('this_month')">이번 달</button>
+    <button class="dqbtn" onclick="setDateRange('last_7')">최근 7일</button>
+    <button class="dqbtn" onclick="setDateRange('last_30')">최근 30일</button>
+    <button class="dqbtn" onclick="setDateRange('last_month')">저번 달</button>
+  </div>
+  <div class="date-sep">|</div>
+  <div class="date-inputs">
+    <input type="date" id="gDateFrom" onchange="onManualDate()">
+    <span>~</span>
+    <input type="date" id="gDateTo" onchange="onManualDate()">
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="err" id="eb"></div>
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">매출액 (손익)</div>
+      <div class="kpi-val" id="k-rev">-</div>
+      <div class="kpi-cmp" id="kc-rev"></div>
+      <div class="kpi-bar" style="background:#6366f1"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">순이익</div>
+      <div class="kpi-val" id="k-np">-</div>
+      <div class="kpi-cmp" id="kc-np"></div>
+      <div class="kpi-bar" style="background:#16a34a"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">순이익률</div>
+      <div class="kpi-val" id="k-margin">-</div>
+      <div class="kpi-cmp" id="kc-margin"></div>
+      <div class="kpi-bar" style="background:#0ea5e9"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">광고비</div>
+      <div class="kpi-val" id="k-ad">-</div>
+      <div class="kpi-cmp" id="kc-ad"></div>
+      <div class="kpi-bar" style="background:#dc2626"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">광고 ROAS</div>
+      <div class="kpi-val" id="k-roas">-</div>
+      <div class="kpi-cmp" id="kc-roas"></div>
+      <div class="kpi-bar" style="background:#d97706"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">총 클릭수</div>
+      <div class="kpi-val" id="k-clicks">-</div>
+      <div class="kpi-cmp" id="kc-clicks"></div>
+      <div class="kpi-bar" style="background:#8b5cf6"></div>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab active" onclick="st('ad')">광고</button>
+    <button class="tab" onclick="st('pnl')">손익/매출</button>
+    <button class="tab" onclick="st('product')">상품</button>
+    <button class="tab" onclick="st('member')">회원</button>
+  </div>
+
+  <!-- 광고 탭 -->
+  <div class="panel active" id="panel-ad">
+    <div class="filters">
+      <div class="fg">
+        <label>그룹 기준</label>
+        <div class="gbtns" id="ad-group-btns">
+          <button class="gbtn active" onclick="sag('캠페인',this)">캠페인</button>
+          <button class="gbtn" onclick="sag('광고그룹',this)">광고그룹</button>
+          <button class="gbtn" onclick="sag('광고 소재',this)">광고소재</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>매체</label>
+        <select id="ad-media" onchange="rAd()"><option>전체</option></select>
+      </div>
+      <div class="fg">
+        <label>상품</label>
+        <select id="ad-product" onchange="rAd()"><option>전체</option></select>
+      </div>
+      <div style="margin-left:auto;">
+        <button class="btn btn-success" onclick="dlCSV('ad')">↓ CSV 다운로드</button>
+      </div>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-toolbar">
+        <span class="tbl-title" id="ad-tbl-title">캠페인별 광고 성과</span>
+        <span style="font-size:11px;color:#94a3b8" id="ad-cnt"></span>
+      </div>
+      <div class="tbl-wrap"><div id="ad-wrap"><div class="loading">데이터 로딩 중...</div></div></div>
+    </div>
+  </div>
+
+  <!-- 손익 탭 -->
+  <div class="panel" id="panel-pnl">
+    <div class="filters">
+      <div class="fg">
+        <label>보기</label>
+        <div class="gbtns">
+          <button class="gbtn active" onclick="spv('weekly',this)">주차별</button>
+          <button class="gbtn" onclick="spv('daily',this)">일별</button>
+        </div>
+      </div>
+      <div class="fg" id="pnl-adj-wrap" style="display:none">
+        <label>&nbsp;</label>
+        <label style="display:flex;align-items:center;gap:5px;padding:6px 0;cursor:pointer;font-size:12px;color:#64748b;">
+          <input type="checkbox" id="ua" onchange="rPnl()"> 보정치 사용 <span class="tag tag-adj">추정</span>
+        </label>
+      </div>
+      <div style="margin-left:auto;">
+        <button class="btn btn-success" onclick="dlCSV('pnl')">↓ CSV 다운로드</button>
+      </div>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-toolbar">
+        <span class="tbl-title">손익/매출 현황</span>
+        <span style="font-size:11px;color:#94a3b8" id="pnl-cnt"></span>
+      </div>
+      <div class="tbl-wrap"><div id="pnl-wrap"><div class="loading">데이터 로딩 중...</div></div></div>
+    </div>
+  </div>
+
+  <!-- 상품 탭 -->
+  <div class="panel" id="panel-product">
+    <div class="filters">
+      <div class="fg">
+        <label>1차 구분</label>
+        <div class="gbtns" id="prd-cat-btns"><button class="gbtn active" onclick="spc('전체',this)">전체</button></div>
+      </div>
+      <div style="margin-left:auto;">
+        <button class="btn btn-success" onclick="dlCSV('product')">↓ CSV 다운로드</button>
+      </div>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-toolbar">
+        <span class="tbl-title">상품별 성과</span>
+        <span style="font-size:11px;color:#94a3b8" id="prd-cnt"></span>
+      </div>
+      <div class="tbl-wrap"><div id="prd-wrap"><div class="loading">데이터 로딩 중...</div></div></div>
+    </div>
+  </div>
+
+  <!-- 회원 탭 -->
+  <div class="panel" id="panel-member">
+    <div class="filters">
+      <div style="margin-left:auto;">
+        <button class="btn btn-success" onclick="dlCSV('member')">↓ CSV 다운로드</button>
+      </div>
+    </div>
+    <div class="tbl-card">
+      <div class="tbl-toolbar">
+        <span class="tbl-title">회원/방문 현황</span>
+        <span style="font-size:11px;color:#94a3b8" id="mb-cnt"></span>
+      </div>
+      <div class="tbl-wrap"><div id="mb-wrap"><div class="loading">데이터 로딩 중...</div></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const URLS={
+  ad:'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9CaCiCMnKb6nTWYkmTl7GNmK2qEy7AO395NBIuZKjkmxZCi_05Bo0PdLhQ5hOMl9yzBa41CfWKe7z/pub?gid=1985453197&single=true&output=csv',
+  pnl:'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9CaCiCMnKb6nTWYkmTl7GNmK2qEy7AO395NBIuZKjkmxZCi_05Bo0PdLhQ5hOMl9yzBa41CfWKe7z/pub?gid=2075502185&single=true&output=csv',
+  product:'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9CaCiCMnKb6nTWYkmTl7GNmK2qEy7AO395NBIuZKjkmxZCi_05Bo0PdLhQ5hOMl9yzBa41CfWKe7z/pub?gid=0&single=true&output=csv',
+  member:'https://docs.google.com/spreadsheets/d/e/2PACX-1vT9CaCiCMnKb6nTWYkmTl7GNmK2qEy7AO395NBIuZKjkmxZCi_05Bo0PdLhQ5hOMl9yzBa41CfWKe7z/pub?gid=1697278603&single=true&output=csv'
+};
+
+let D={ad:[],pnl:[],product:[],member:[]};
+let agb='캠페인', pv='weekly', pc='전체', exp=new Set();
+let gFrom='', gTo='';
+
+// ── 날짜 유틸 ──
+function toDateStr(d){return d.toISOString().slice(0,10);}
+function yesterday(){const d=new Date();d.setDate(d.getDate()-1);return toDateStr(d);}
+function today(){return toDateStr(new Date());}
+
+function setDateRange(type){
+  document.querySelectorAll('.dqbtn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  const now=new Date();
+  let from,to;
+  if(type==='yesterday'){
+    from=to=yesterday();
+  } else if(type==='this_month'){
+    from=toDateStr(new Date(now.getFullYear(),now.getMonth(),1));
+    to=yesterday();
+  } else if(type==='last_7'){
+    const d=new Date();d.setDate(d.getDate()-7);
+    from=toDateStr(d);to=yesterday();
+  } else if(type==='last_30'){
+    const d=new Date();d.setDate(d.getDate()-30);
+    from=toDateStr(d);to=yesterday();
+  } else if(type==='last_month'){
+    const d=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const d2=new Date(now.getFullYear(),now.getMonth(),0);
+    from=toDateStr(d);to=toDateStr(d2);
+  }
+  gFrom=from;gTo=to;
+  document.getElementById('gDateFrom').value=from;
+  document.getElementById('gDateTo').value=to;
+  renderAll();
+}
+
+function onManualDate(){
+  document.querySelectorAll('.dqbtn').forEach(b=>b.classList.remove('active'));
+  gFrom=document.getElementById('gDateFrom').value;
+  gTo=document.getElementById('gDateTo').value;
+  renderAll();
+}
+
+function initDateRange(){
+  const now=new Date();
+  gFrom=toDateStr(new Date(now.getFullYear(),now.getMonth(),1));
+  gTo=yesterday();
+  document.getElementById('gDateFrom').value=gFrom;
+  document.getElementById('gDateTo').value=gTo;
+}
+
+// ── CSV 파싱 ──
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  if(lines.length<2)return[];
+  const headers=parseLine(lines[0]);
+  return lines.slice(1).map(l=>{
+    const vals=parseLine(l);
+    const obj={};
+    headers.forEach((h,i)=>{obj[h.trim()]=(vals[i]||'').trim();});
+    return obj;
+  });
+}
+function parseLine(line){
+  const row=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){row.push(cur.replace(/^"|"$/g,''));cur='';}
+    else{cur+=c;}
+  }
+  row.push(cur.replace(/^"|"$/g,''));
+  return row;
+}
+
+// ── 숫자 변환 ──
+function n(v){
+  if(!v||v==='-')return 0;
+  const s=String(v).replace(/[^0-9.-]/g,'');
+  const r=parseFloat(s);
+  return isNaN(r)?0:r;
+}
+function pctVal(v){
+  // "15.3%" → 0.153
+  if(!v)return 0;
+  const s=String(v).replace('%','').trim();
+  const r=parseFloat(s);
+  return isNaN(r)?0:r/100;
+}
+
+// ── 포맷 ──
+function fK(v){
+  v=Math.round(v);
+  if(Math.abs(v)>=100000000)return(v/100000000).toFixed(1)+'억';
+  if(Math.abs(v)>=10000)return Math.round(v/10000).toLocaleString()+'만';
+  return v.toLocaleString();
+}
+function fN(v){return Math.round(v).toLocaleString();}
+function fP(v){return(v*100).toFixed(1)+'%';}
+function bar(v,mx,c='#6366f1'){
+  const p=mx>0?Math.min(v/mx*100,100):0;
+  return `<td class="bar-cell"><div class="mbar"><div class="mbar-inner" style="width:${p.toFixed(1)}%;background:${c}"></div></div></td>`;
+}
+function cmpHtml(curr,prev,isRate=false){
+  if(!prev||prev===0)return'<span class="flat">이전 데이터 없음</span>';
+  const diff=curr-prev;
+  const pct=Math.abs(diff/prev*100).toFixed(1);
+  const sign=diff>=0?'+':'-';
+  const cls=diff>=0?'up':'down';
+  const arrow=diff>=0?'▲':'▼';
+  const val=isRate?(Math.abs(diff)*100).toFixed(1)+'%p':fK(Math.abs(diff));
+  return`<span class="${cls}">${arrow} ${val} (${sign}${pct}%)</span> <span style="color:#cbd5e1;font-size:10px">전월 동기간 대비</span>`;
+}
+
+// ── 날짜 필터 ──
+function filterByDate(rows,dateKey){
+  return rows.filter(r=>{
+    const d=r[dateKey];
+    if(!d||d===dateKey)return false;
+    if(gFrom&&d<gFrom)return false;
+    if(gTo&&d>gTo)return false;
+    return true;
+  });
+}
+
+// 전월 동기간 계산
+function prevPeriodRange(){
+  if(!gFrom||!gTo)return{from:'',to:''};
+  const f=new Date(gFrom),t=new Date(gTo);
+  f.setMonth(f.getMonth()-1);t.setMonth(t.getMonth()-1);
+  return{from:toDateStr(f),to:toDateStr(t)};
+}
+function filterPrev(rows,dateKey){
+  const{from,to}=prevPeriodRange();
+  return rows.filter(r=>{
+    const d=r[dateKey];
+    if(!d)return false;
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
+  });
+}
+
+// ── 데이터 로드 ──
+async function loadAll(){
+  const btn=document.getElementById('rb');
+  btn.textContent='로딩 중...';btn.disabled=true;
+  document.getElementById('eb').style.display='none';
+  try{
+    const res=await Promise.all(Object.values(URLS).map(async u=>{
+      const r=await fetch(u);
+      if(!r.ok)throw new Error();
+      return parseCSV(await r.text());
+    }));
+    D={ad:res[0],pnl:res[1],product:res[2],member:res[3]};
+    document.getElementById('lu').textContent='마지막 업데이트: '+new Date().toLocaleTimeString('ko-KR');
+    initFilters();
+    renderAll();
+  }catch(e){
+    const eb=document.getElementById('eb');
+    eb.style.display='block';
+    eb.textContent='⚠️ 데이터를 불러오지 못했어요. 네트워크 또는 시트 공개 설정을 확인해 주세요.';
+  }
+  btn.textContent='⟳ 새로고침';btn.disabled=false;
+}
+
+function renderAll(){kpi();rAd();rPnl();rPrd();rMb();}
+
+// ── 필터 초기화 ──
+function initFilters(){
+  // 광고 매체
+  const medias=['전체',...new Set(D.ad.map(r=>r['매체']).filter(Boolean))];
+  const mSel=document.getElementById('ad-media');
+  const mv=mSel.value;
+  mSel.innerHTML=medias.map(m=>`<option${m===mv?' selected':''}>${m}</option>`).join('');
+  // 광고 상품
+  const products=['전체',...new Set(D.ad.map(r=>r['제품']).filter(Boolean))];
+  const pSel=document.getElementById('ad-product');
+  const pv2=pSel.value;
+  pSel.innerHTML=products.map(p=>`<option${p===pv2?' selected':''}>${p}</option>`).join('');
+  // 상품 카테고리
+  const cats=[...new Set(D.product.map(r=>r['1차 구분']).filter(Boolean))];
+  const cb=document.getElementById('prd-cat-btns');
+  cb.innerHTML=['전체',...cats].map(c=>`<button class="gbtn${c===pc?' active':''}" onclick="spc('${c}',this)">${c}</button>`).join('');
+}
+
+// ── KPI ──
+function kpi(){
+  const pnlF=filterByDate(D.pnl,'일자');
+  const pnlP=filterPrev(D.pnl,'일자');
+  const adF=filterByDate(D.ad,'일별');
+  const adP=filterPrev(D.ad,'일별');
+
+  const rev=pnlF.reduce((s,r)=>s+n(r['매출액_손익']),0);
+  const np=pnlF.reduce((s,r)=>s+n(r['순이익']),0);
+  const adCost=pnlF.reduce((s,r)=>s+n(r['광고비']),0);
+  const margin=rev>0?np/rev:0;
+
+  const adRev=adF.reduce((s,r)=>s+n(r['전환매출액(원)']),0);
+  const adBudget=adF.reduce((s,r)=>s+n(r['총비용(VAT포함,원)']),0);
+  const roas=adBudget>0?adRev/adBudget:0;
+  const clicks=adF.reduce((s,r)=>s+n(r['클릭수']),0);
+
+  const prevRev=pnlP.reduce((s,r)=>s+n(r['매출액_손익']),0);
+  const prevNp=pnlP.reduce((s,r)=>s+n(r['순이익']),0);
+  const prevAdCost=pnlP.reduce((s,r)=>s+n(r['광고비']),0);
+  const prevMargin=prevRev>0?prevNp/prevRev:0;
+  const prevAdBudget=adP.reduce((s,r)=>s+n(r['총비용(VAT포함,원)']),0);
+  const prevAdRev=adP.reduce((s,r)=>s+n(r['전환매출액(원)']),0);
+  const prevRoas=prevAdBudget>0?prevAdRev/prevAdBudget:0;
+  const prevClicks=adP.reduce((s,r)=>s+n(r['클릭수']),0);
+
+  document.getElementById('k-rev').textContent=fK(rev);
+  document.getElementById('k-np').textContent=fK(np);
+  document.getElementById('k-margin').textContent=fP(margin);
+  document.getElementById('k-ad').textContent=fK(adCost);
+  document.getElementById('k-roas').textContent=roas.toFixed(1)+'x';
+  document.getElementById('k-clicks').textContent=fN(clicks);
+
+  document.getElementById('kc-rev').innerHTML=cmpHtml(rev,prevRev);
+  document.getElementById('kc-np').innerHTML=cmpHtml(np,prevNp);
+  document.getElementById('kc-margin').innerHTML=cmpHtml(margin,prevMargin,true);
+  document.getElementById('kc-ad').innerHTML=cmpHtml(adCost,prevAdCost);
+  document.getElementById('kc-roas').innerHTML=cmpHtml(roas,prevRoas,true);
+  document.getElementById('kc-clicks').innerHTML=cmpHtml(clicks,prevClicks);
+}
+
+// ── 광고 탭 ──
+function sag(g,el){
+  agb=g;exp.clear();
+  document.querySelectorAll('#ad-group-btns .gbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  rAd();
+}
+
+function rAd(){
+  const media=document.getElementById('ad-media').value;
+  const prod=document.getElementById('ad-product').value;
+  const filt=filterByDate(D.ad,'일별').filter(r=>{
+    if(media!=='전체'&&r['매체']!==media)return false;
+    if(prod!=='전체'&&r['제품']!==prod)return false;
+    return true;
+  });
+
+  const grp={};
+  filt.forEach(r=>{
+    const k=r[agb]||'(미분류)';
+    if(!grp[k])grp[k]={b:0,imp:0,cl:0,cv:0,rv:0,rows:[]};
+    grp[k].b+=n(r['총비용(VAT포함,원)']);
+    grp[k].imp+=n(r['노출수']);
+    grp[k].cl+=n(r['클릭수']);
+    grp[k].cv+=n(r['전환수']);
+    grp[k].rv+=n(r['전환매출액(원)']);
+    grp[k].rows.push(r);
+  });
+
+  const rows=Object.entries(grp).sort((a,b)=>b[1].b-a[1].b);
+  const mx=Math.max(...rows.map(r=>r[1].b),1);
+  const sk=agb==='캠페인'?'광고그룹':agb==='광고그룹'?'광고 소재':'광고그룹';
+
+  document.getElementById('ad-tbl-title').textContent=agb+'별 광고 성과';
+  document.getElementById('ad-cnt').textContent=rows.length+'개';
+
+  let h=`<table><thead><tr>
+    <th>${agb}</th>
+    <th>광고비</th><th>노출수</th><th>클릭수</th>
+    <th>CPM</th><th>CTR</th><th>CPC</th>
+    <th>전환수</th><th>전환매출</th><th>ROAS</th><th>비중</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(([k,d])=>{
+    const roas=d.b>0?d.rv/d.b:0;
+    const rc=roas>=3?'gh':roas>=1.5?'gm':'gl';
+    const cpm=d.imp>0?d.b/d.imp*1000:0;
+    const ctr=d.imp>0?d.cl/d.imp:0;
+    const cpc=d.cl>0?d.b/d.cl:0;
+    const ie=exp.has(k);
+    const ek=k.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    h+=`<tr class="dr" onclick="te('${ek}')">
+      <td><span class="ei">${ie?'▼':'▶'}</span>${k}</td>
+      <td>${fK(d.b)}</td><td>${fN(d.imp)}</td><td>${fN(d.cl)}</td>
+      <td>${fN(Math.round(cpm))}</td>
+      <td>${fP(ctr)}</td>
+      <td>${fN(Math.round(cpc))}</td>
+      <td>${fN(d.cv)}</td><td>${fK(d.rv)}</td>
+      <td class="${rc}">${roas.toFixed(1)}x</td>
+      ${bar(d.b,mx,'#6366f1')}
+    </tr>`;
+
+    if(ie){
+      const sg={};
+      d.rows.forEach(r=>{
+        const s=r[sk]||'(미분류)';
+        if(!sg[s])sg[s]={b:0,imp:0,cl:0,cv:0,rv:0};
+        sg[s].b+=n(r['총비용(VAT포함,원)']);
+        sg[s].imp+=n(r['노출수']);
+        sg[s].cl+=n(r['클릭수']);
+        sg[s].cv+=n(r['전환수']);
+        sg[s].rv+=n(r['전환매출액(원)']);
+      });
+      Object.entries(sg).sort((a,b)=>b[1].b-a[1].b).forEach(([s,sd])=>{
+        const sr=sd.b>0?sd.rv/sd.b:0,sc=sr>=3?'gh':sr>=1.5?'gm':'gl';
+        const scpm=sd.imp>0?sd.b/sd.imp*1000:0;
+        const sctr=sd.imp>0?sd.cl/sd.imp:0;
+        const scpc=sd.cl>0?sd.b/sd.cl:0;
+        h+=`<tr class="sub">
+          <td style="padding-left:28px">↳ ${s}</td>
+          <td>${fK(sd.b)}</td><td>${fN(sd.imp)}</td><td>${fN(sd.cl)}</td>
+          <td>${fN(Math.round(scpm))}</td>
+          <td>${fP(sctr)}</td>
+          <td>${fN(Math.round(scpc))}</td>
+          <td>${fN(sd.cv)}</td><td>${fK(sd.rv)}</td>
+          <td class="${sc}">${sr.toFixed(1)}x</td>
+          ${bar(sd.b,d.b,'#a5b4fc')}
+        </tr>`;
+      });
+    }
+  });
+  h+='</tbody></table>';
+  document.getElementById('ad-wrap').innerHTML=h;
+}
+function te(k){if(exp.has(k))exp.delete(k);else exp.add(k);rAd();}
+
+// ── 손익 탭 ──
+function spv(v,el){
+  pv=v;
+  document.querySelectorAll('#panel-pnl .gbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pnl-adj-wrap').style.display=v==='daily'?'block':'none';
+  rPnl();
+}
+
+function rPnl(){
+  const useAdj=document.getElementById('ua').checked&&pv==='daily';
+  let h='';
+
+  if(pv==='weekly'){
+    const g={},ord=[];
+    D.pnl.forEach(r=>{
+      const m=(r['월']||'').trim(),w=(r['주차']||'').trim();
+      if(!m||!w||m==='월'||isNaN(Number(m)))return;
+      const k=m+'월 '+w+'주차';
+      if(!g[k]){g[k]={rv:0,ad:0,pf:0,np:0,fee:0,cost:0,logi:0};ord.push(k);}
+      g[k].rv+=n(r['매출액_손익']);
+      g[k].fee+=n(r['수수료']);
+      g[k].cost+=n(r['제품원가']);
+      g[k].logi+=n(r['물류비']);
+      g[k].pf+=n(r['이익']);
+      g[k].ad+=n(r['광고비']);
+      g[k].np+=n(r['순이익']);
+    });
+    const rows=[...new Set(ord)].map(k=>[k,g[k]]);
+    const mx=Math.max(...rows.map(r=>r[1].rv),1);
+    document.getElementById('pnl-cnt').textContent=rows.length+'주차';
+    h=`<table><thead><tr>
+      <th>기간</th><th>매출액</th><th>수수료</th><th>제품원가</th><th>물류비</th>
+      <th>이익액</th><th>광고비</th><th>순이익</th><th>순이익률</th><th>비중</th>
+    </tr></thead><tbody>`;
+    rows.forEach(([k,d])=>{
+      const mg=d.rv>0?d.np/d.rv:0,mc=d.np>=0?'pp':'pn';
+      h+=`<tr>
+        <td>${k}</td>
+        <td>${fK(d.rv)}</td>
+        <td style="color:#64748b">${fK(d.fee)}</td>
+        <td style="color:#64748b">${fK(d.cost)}</td>
+        <td style="color:#64748b">${fK(d.logi)}</td>
+        <td>${fK(d.pf)}</td>
+        <td style="color:#dc2626">${fK(d.ad)}</td>
+        <td class="${mc}">${fK(d.np)}</td>
+        <td class="${mc}">${fP(mg)}</td>
+        ${bar(d.rv,mx,'#6366f1')}
+      </tr>`;
+    });
+    h+='</tbody></table>';
+  } else {
+    // 일별
+    const prefix=useAdj?'_보정':'';
+    const filt=filterByDate(D.pnl,'일자');
+    document.getElementById('pnl-cnt').textContent=filt.length+'일';
+    const mx=Math.max(...filt.map(r=>n(r[useAdj?'매출액_보정':'매출액_손익'])),1);
+    h=`<table><thead><tr>
+      <th>일자</th><th>요일</th>
+      ${useAdj?'<th>매출액 <span class="tag tag-adj">추정</span></th>':'<th>매출액</th>'}
+      <th>수수료</th><th>제품원가</th><th>물류비</th>
+      <th>이익액</th><th>광고비</th><th>순이익</th><th>순이익률</th><th>비중</th>
+    </tr></thead><tbody>`;
+    filt.slice().reverse().forEach(r=>{
+      const rv=n(r[useAdj?'매출액_보정':'매출액_손익']);
+      const fee=n(r[useAdj?'수수료_보정':'수수료']);
+      const cost=n(r[useAdj?'제품원가_보정':'제품원가']);
+      const logi=n(r[useAdj?'물류비_보정':'물류비']);
+      const pf=n(r[useAdj?'이익_보정':'이익']);
+      const ad=n(r[useAdj?'광고비_보정':'광고비']);
+      const np=n(r[useAdj?'순이익_보정':'순이익']);
+      const mg=rv>0?np/rv:0,mc=np>=0?'pp':'pn';
+      h+=`<tr>
+        <td>${r['일자']}</td>
+        <td style="color:#94a3b8">${r['요일']||''}</td>
+        <td>${fK(rv)}</td>
+        <td style="color:#64748b">${fK(fee)}</td>
+        <td style="color:#64748b">${fK(cost)}</td>
+        <td style="color:#64748b">${fK(logi)}</td>
+        <td>${fK(pf)}</td>
+        <td style="color:#dc2626">${fK(ad)}</td>
+        <td class="${mc}">${fK(np)}</td>
+        <td class="${mc}">${fP(mg)}</td>
+        ${bar(rv,mx,'#6366f1')}
+      </tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  document.getElementById('pnl-wrap').innerHTML=h;
+}
+
+// ── 상품 탭 ──
+function spc(c,el){
+  pc=c;
+  document.querySelectorAll('#prd-cat-btns .gbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  rPrd();
+}
+function rPrd(){
+  const data=filterByDate(D.product,'일자');
+  const filt=pc==='전체'?data:data.filter(r=>r['1차 구분']===pc);
+  const g={};
+  filt.forEach(r=>{
+    const k=r['상품명']||r['세부 상품명']||'(미분류)';
+    if(!g[k])g[k]={ex:0,sl:0,sm:0,ct:0,cat:r['1차 구분']||'',cat2:r['2차 구분']||''};
+    g[k].ex+=n(r['노출수']);g[k].sl+=n(r['판매건수']);
+    g[k].sm+=n(r['판매금액']);g[k].ct+=n(r['담긴수']);
+  });
+  const rows=Object.entries(g).sort((a,b)=>b[1].sm-a[1].sm).slice(0,100);
+  const mx=Math.max(...rows.map(r=>r[1].sm),1);
+  document.getElementById('prd-cnt').textContent=rows.length+'개';
+  let h=`<table><thead><tr>
+    <th>상품명</th><th>구분</th><th>판매금액</th><th>판매건수</th>
+    <th>노출수</th><th>담김수</th><th>전환율</th><th>비중</th>
+  </tr></thead><tbody>`;
+  rows.forEach(([k,d])=>{
+    const cv=d.ex>0?d.sl/d.ex:0;
+    h+=`<tr>
+      <td>${k}</td>
+      <td style="color:#94a3b8;font-size:11px">${d.cat}${d.cat2?' > '+d.cat2:''}</td>
+      <td>${fK(d.sm)}</td><td>${fN(d.sl)}</td>
+      <td>${fN(d.ex)}</td><td>${fN(d.ct)}</td>
+      <td>${fP(cv)}</td>
+      ${bar(d.sm,mx,'#8b5cf6')}
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('prd-wrap').innerHTML=h;
+}
+
+// ── 회원 탭 ──
+function rMb(){
+  const rows=filterByDate(D.member,'일자').slice().reverse();
+  const mx=Math.max(...rows.map(r=>n(r['전체방문'])),1);
+  document.getElementById('mb-cnt').textContent=rows.length+'일';
+  let h=`<table><thead><tr>
+    <th>일자</th><th>요일</th><th>전체방문</th><th>순방문</th>
+    <th>재방문</th><th>첫방문</th><th>신규회원</th><th>비중</th>
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const v=n(r['전체방문']);
+    h+=`<tr>
+      <td>${r['일자']}</td>
+      <td style="color:#94a3b8">${r['요일']||''}</td>
+      <td>${fN(v)}</td>
+      <td>${fN(n(r['순방문수']))}</td>
+      <td>${fN(n(r['재방문수']))}</td>
+      <td>${fN(n(r['첫 방문자 수']))}</td>
+      <td style="color:#6366f1;font-weight:700">${fN(n(r['신규 회원 수']))}</td>
+      ${bar(v,mx,'#06b6d4')}
+    </tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('mb-wrap').innerHTML=h;
+}
+
+// ── 탭 전환 ──
+function st(t){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  document.querySelectorAll('.tab')[['ad','pnl','product','member'].indexOf(t)].classList.add('active');
+}
+
+// ── CSV 다운로드 ──
+function mkCSV(headers,rows){
+  const bom='\uFEFF';
+  const body=[headers,...rows].map(r=>r.map(c=>{
+    const s=String(c??'');
+    return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:`s`;
+  }).join(',')).join('\n');
+  return bom+body;
+}
+function dlFile(content,name){
+  const blob=new Blob([content],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+function dateTag(){return new Date().toISOString().slice(0,10).replace(/-/g,'');}
+
+function dlCSV(t){
+  if(t==='ad'){
+    const media=document.getElementById('ad-media').value;
+    const prod=document.getElementById('ad-product').value;
+    const filt=filterByDate(D.ad,'일별').filter(r=>{
+      if(media!=='전체'&&r['매체']!==media)return false;
+      if(prod!=='전체'&&r['제품']!==prod)return false;
+      return true;
+    });
+    const grp={};
+    filt.forEach(r=>{
+      const k=r[agb]||'(미분류)';
+      if(!grp[k])grp[k]={b:0,imp:0,cl:0,cv:0,rv:0};
+      grp[k].b+=n(r['총비용(VAT포함,원)']);grp[k].imp+=n(r['노출수']);
+      grp[k].cl+=n(r['클릭수']);grp[k].cv+=n(r['전환수']);grp[k].rv+=n(r['전환매출액(원)']);
+    });
+    const rows=Object.entries(grp).sort((a,b)=>b[1].b-a[1].b).map(([k,d])=>{
+      const roas=d.b>0?d.rv/d.b:0;
+      const cpm=d.imp>0?d.b/d.imp*1000:0;
+      const ctr=d.imp>0?d.cl/d.imp*100:0;
+      const cpc=d.cl>0?d.b/d.cl:0;
+      return[k,Math.round(d.b),Math.round(d.imp),Math.round(d.cl),Math.round(cpm),ctr.toFixed(2)+'%',Math.round(cpc),Math.round(d.cv),Math.round(d.rv),roas.toFixed(2)];
+    });
+    dlFile(mkCSV([agb,'광고비','노출수','클릭수','CPM','CTR','CPC','전환수','전환매출','ROAS'],rows),`광고_${agb}별_${dateTag()}.csv`);
+  } else if(t==='pnl'){
+    const useAdj=document.getElementById('ua').checked&&pv==='daily';
+    if(pv==='weekly'){
+      const g={},ord=[];
+      D.pnl.forEach(r=>{
+        const m=(r['월']||'').trim(),w=(r['주차']||'').trim();
+        if(!m||!w||isNaN(Number(m)))return;
+        const k=m+'월 '+w+'주차';
+        if(!g[k]){g[k]={rv:0,ad:0,pf:0,np:0};ord.push(k);}
+        g[k].rv+=n(r['매출액_손익']);g[k].ad+=n(r['광고비']);g[k].pf+=n(r['이익']);g[k].np+=n(r['순이익']);
+      });
+      const rows=[...new Set(ord)].map(k=>{const d=g[k];const mg=d.rv>0?(d.np/d.rv*100).toFixed(1)+'%':'0%';return[k,Math.round(d.rv),Math.round(d.ad),Math.round(d.pf),Math.round(d.np),mg];});
+      dlFile(mkCSV(['기간','매출액','광고비','이익액','순이익','순이익률'],rows),`손익_주차별_${dateTag()}.csv`);
+    } else {
+      const filt=filterByDate(D.pnl,'일자').slice().reverse();
+      const rows=filt.map(r=>{
+        const rv=n(r[useAdj?'매출액_보정':'매출액_손익']);
+        const np=n(r[useAdj?'순이익_보정':'순이익']);
+        const mg=rv>0?(np/rv*100).toFixed(1)+'%':'0%';
+        return[r['일자'],r['요일']||'',Math.round(rv),Math.round(n(r[useAdj?'광고비_보정':'광고비'])),Math.round(n(r[useAdj?'이익_보정':'이익'])),Math.round(np),mg];
+      });
+      dlFile(mkCSV(['일자','요일','매출액','광고비','이익액','순이익','순이익률'],rows),`손익_일별${useAdj?'_보정':''}_${dateTag()}.csv`);
+    }
+  } else if(t==='product'){
+    const data=filterByDate(D.product,'일자');
+    const filt=pc==='전체'?data:data.filter(r=>r['1차 구분']===pc);
+    const g={};
+    filt.forEach(r=>{
+      const k=r['상품명']||r['세부 상품명']||'(미분류)';
+      if(!g[k])g[k]={cat:r['1차 구분']||'',ex:0,sl:0,sm:0,ct:0};
+      g[k].ex+=n(r['노출수']);g[k].sl+=n(r['판매건수']);g[k].sm+=n(r['판매금액']);g[k].ct+=n(r['담긴수']);
+    });
+    const rows=Object.entries(g).sort((a,b)=>b[1].sm-a[1].sm).map(([k,d])=>{
+      const cv=d.ex>0?(d.sl/d.ex*100).toFixed(2)+'%':'0%';
+      return[k,d.cat,Math.round(d.sm),Math.round(d.sl),Math.round(d.ex),Math.round(d.ct),cv];
+    });
+    dlFile(mkCSV(['상품명','구분','판매금액','판매건수','노출수','담김수','전환율'],rows),`상품_${dateTag()}.csv`);
+  } else if(t==='member'){
+    const rows=filterByDate(D.member,'일자').slice().reverse();
+    const data=rows.map(r=>[r['일자'],r['요일']||'',Math.round(n(r['전체방문'])),Math.round(n(r['순방문수'])),Math.round(n(r['재방문수'])),Math.round(n(r['첫 방문자 수'])),Math.round(n(r['신규 회원 수']))]);
+    dlFile(mkCSV(['일자','요일','전체방문','순방문','재방문','첫방문','신규회원'],data),`회원_${dateTag()}.csv`);
+  }
+}
+
+// ── 시작 ──
+initDateRange();
+loadAll();
+</script>
+</body>
+</html>
